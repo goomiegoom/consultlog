@@ -1,0 +1,75 @@
+:root {
+  /* Claude-inspired warm light palette */
+  --bg:            oklch(0.985 0.004 75);
+  --surface-0:     oklch(0.965 0.005 75);
+  --surface-1:     oklch(1.000 0.000 0);
+  --surface-2:     oklch(0.955 0.006 75);
+  --surface-3:     oklch(0.920 0.008 75);
+  --border:        oklch(0.910 0.008 75);
+  --border-strong: oklch(0.820 0.010 75);
+  --text-1:        oklch(0.20 0.010 60);
+  --text-2:        oklch(0.40 0.012 60);
+  --text-3:        oklch(0.58 0.010 60);
+  --accent:        oklch(0.66 0.15 45);
+  --accent-hover:  oklch(0.60 0.16 42);
+  --accent-soft:   oklch(0.66 0.15 45 / 0.12);
+  --warn:          oklch(0.68 0.14 70);
+  --danger:        oklch(0.58 0.20 28);
+  --font-sans:     'Inter', -apple-system, system-ui, sans-serif;
+  --font-mono:     'JetBrains Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-1);
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
