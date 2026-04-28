@@ -70,7 +70,7 @@ export default function CustomerView({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>
-                Project · started {fmtDateLong(proj.startDate)}
+                Project · {fmtDateLong(proj.startDate)}{proj.endDate ? ` – ${fmtDateLong(proj.endDate)}` : ''}
               </div>
               <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-1)', letterSpacing: '-0.01em' }}>
                 {proj.name}

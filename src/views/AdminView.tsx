@@ -422,6 +422,7 @@ function ProjectFormModal({
       includedHours: 10, overageRate: 2500,
       consultants: [], customers: [],
       startDate: new Date().toISOString().slice(0, 10),
+      endDate: '',
       notes: '',
     });
   }, [open, project]);
@@ -458,15 +459,20 @@ function ProjectFormModal({
             <Input value={draft.customerContact} onChange={(v) => set('customerContact', v as string)} placeholder="email@acme.com" />
           </Field>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Field label="Included hours">
             <Input type="number" value={draft.includedHours} onChange={(v) => set('includedHours', v as number)} suffix="h" />
           </Field>
           <Field label="Overage rate">
             <Input type="number" value={draft.overageRate} onChange={(v) => set('overageRate', v as number)} suffix="฿/h" />
           </Field>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Field label="Start date">
             <Input type="date" value={draft.startDate} onChange={(v) => set('startDate', v as string)} />
+          </Field>
+          <Field label="End date">
+            <Input type="date" value={draft.endDate} onChange={(v) => set('endDate', v as string)} />
           </Field>
         </div>
 
@@ -541,7 +547,7 @@ function ProjectDetail({
             <StatusPill tone={status.tone}>{status.label}</StatusPill>
           </span>
         }
-        subtitle={`${project.customer} · started ${fmtDateLong(project.startDate)} · ${fmtTHB(project.overageRate)}/h overage`}
+        subtitle={`${project.customer} · ${fmtDateLong(project.startDate)}${project.endDate ? ` – ${fmtDateLong(project.endDate)}` : ''} · ${fmtTHB(project.overageRate)}/h overage`}
         action={
           <div style={{ display: 'inline-flex', gap: 6 }}>
             <Button size="sm" variant="secondary" icon={<IconEdit size={13} />} onClick={onEdit}>Edit</Button>

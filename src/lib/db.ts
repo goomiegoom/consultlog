@@ -19,6 +19,7 @@ interface DBProject {
   included_hours: number;
   overage_rate: number;
   start_date: string;
+  end_date: string;
   notes: string;
 }
 
@@ -81,6 +82,7 @@ export async function fetchAppData(): Promise<AppData> {
     includedHours: p.included_hours,
     overageRate: p.overage_rate,
     startDate: p.start_date,
+    endDate: p.end_date ?? '',
     notes: p.notes,
     consultants: (dbMembers as DBMember[] ?? [])
       .filter((m) => m.project_id === p.id && m.member_type === 'consultant')
@@ -127,6 +129,7 @@ export async function saveProject(project: Project): Promise<string> {
     included_hours: project.includedHours,
     overage_rate: project.overageRate,
     start_date: project.startDate,
+    end_date: project.endDate || null,
     notes: project.notes,
   };
 
