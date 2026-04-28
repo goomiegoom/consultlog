@@ -4,7 +4,6 @@ import { supabase } from './lib/supabase';
 import { fetchProfile, fetchAppData, saveProject, deleteProject, addLog, removeLog, updateProfile } from './lib/db';
 import type { Profile, AppData } from './lib/db';
 import type { Project, Consultant, Customer, Log } from './data';
-import { projectUsage } from './data';
 import { Avatar } from './components/ui';
 import LoginPage from './components/LoginPage';
 import SetPasswordPage from './components/SetPasswordPage';
