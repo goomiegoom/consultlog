@@ -230,12 +230,14 @@ export default function App() {
 
   // Patch AdminView's onSave/onDelete to also persist to Supabase
   const wrappedSetProjects: React.Dispatch<React.SetStateAction<Project[]>> = async (updater) => {
-    const next = typeof updater === 'function' ? updater(projects) : updater;
-    // Find what changed by diffing
-    const added = next.filter((p) => !projects.find((x) => x.id === p.id));
-    const removed = projects.filter((p) => !next.find((x) => x.id === p.id));
+    const prev = projects;
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    // Optimistic update so the UI responds immediately
+    setState((s) => s.phase === 'ready' ? { ...s, data: { ...s.data, projects: next } } : s);
+    const added = next.filter((p) => !prev.find((x) => x.id === p.id));
+    const removed = prev.filter((p) => !next.find((x) => x.id === p.id));
     const updated = next.filter((p) => {
-      const old = projects.find((x) => x.id === p.id);
+      const old = prev.find((x) => x.id === p.id);
       return old && JSON.stringify(old) !== JSON.stringify(p);
     });
     try {
@@ -246,7 +248,7 @@ export default function App() {
       ]);
     } catch (err) {
       console.error('saveProject error', err);
-      alert(`Failed to save project: ${(err as Error).message}`);
+      alert(`Failed to save project:\n${(err as Error).message}`);
     }
     await reload();
   };
