@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Orange bubble (back, top-right) -->
+  <rect x="28" y="4" width="62" height="52" rx="14" ry="14" fill="#F5A623"/>
+  <!-- Dark navy bubble (front, with tail) -->
+  <path d="M8,18 Q8,6 20,6 L72,6 Q84,6 84,18 L84,58 Q84,70 72,70 L36,70 L20,88 L24,70 L20,70 Q8,70 8,58 Z" fill="#1A1B4B"/>
+</svg>
