@@ -57,6 +57,7 @@ export interface AppData {
   logs: Log[];
   consultants: Consultant[];
   customers: Customer[];
+  profiles: Profile[];
 }
 
 export async function fetchAppData(): Promise<AppData> {
@@ -111,7 +112,7 @@ export async function fetchAppData(): Promise<AppData> {
     .filter((p) => p.role === 'customer')
     .map((p) => ({ id: p.id, name: p.name, company: p.company }));
 
-  return { projects, logs, consultants, customers };
+  return { projects, logs, consultants, customers, profiles };
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
@@ -177,5 +178,10 @@ export async function addLog(entry: Omit<Log, 'id'>): Promise<Log> {
 
 export async function removeLog(logId: string): Promise<void> {
   const { error } = await supabase.from('logs').delete().eq('id', logId);
+  if (error) throw error;
+}
+
+export async function updateProfile(userId: string, updates: Partial<Omit<Profile, 'id'>>): Promise<void> {
+  const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
   if (error) throw error;
 }

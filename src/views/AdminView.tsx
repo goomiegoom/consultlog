@@ -8,6 +8,7 @@ import {
   StatusPill, statusForUsage,
   IconPlus, IconEdit, IconTrash, IconClock,
 } from '../components/ui';
+import type { Profile } from '../lib/db';
 
 // ── Shared sub-components used by multiple views ──────────────────────────────
 
@@ -619,11 +620,218 @@ function ProjectDetail({
   );
 }
 
+// ── User management ───────────────────────────────────────────────────────────
+
+const ROLE_OPTIONS: { value: Profile['role']; label: string }[] = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'consultant', label: 'Consultant' },
+  { value: 'customer', label: 'Customer' },
+];
+
+function UserEditModal({
+  open, profile, onClose, onSave,
+}: {
+  open: boolean;
+  profile: Profile | null;
+  onClose: () => void;
+  onSave: (updates: Partial<Omit<Profile, 'id'>>) => Promise<void>;
+}) {
+  const [draft, setDraft] = React.useState<Partial<Omit<Profile, 'id'>>>({});
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    if (open && profile) {
+      setDraft({ name: profile.name, role: profile.role, job_title: profile.job_title, company: profile.company });
+      setError('');
+    }
+  }, [open, profile]);
+
+  if (!profile) return null;
+  const set = <K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) => setDraft((d) => ({ ...d, [k]: v }));
+
+  const handleSave = async () => {
+    if (!draft.name?.trim()) { setError('Name is required.'); return; }
+    setSaving(true);
+    try {
+      await onSave(draft);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose}
+      title={`Edit user · ${profile.name}`}
+      width={400}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" disabled={saving} onClick={handleSave}>
+            {saving ? 'Saving…' : 'Save changes'}
+          </Button>
+        </>
+      }>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Field label="Display name">
+          <Input value={draft.name ?? ''} onChange={(v) => set('name', v as string)} placeholder="Full name" />
+        </Field>
+        <Field label="Role">
+          <Select value={draft.role ?? 'customer'} onChange={(v) => set('role', v as Profile['role'])} options={ROLE_OPTIONS} />
+        </Field>
+        {draft.role === 'consultant' && (
+          <Field label="Job title" hint="Shown as subtitle next to their name.">
+            <Input value={draft.job_title ?? ''} onChange={(v) => set('job_title', v as string)} placeholder="e.g. Senior Consultant" />
+          </Field>
+        )}
+        {draft.role === 'customer' && (
+          <Field label="Company" hint="Shown on the customer dashboard.">
+            <Input value={draft.company ?? ''} onChange={(v) => set('company', v as string)} placeholder="e.g. Acme Corp" />
+          </Field>
+        )}
+        {error && (
+          <div style={{
+            padding: '8px 12px', borderRadius: 7,
+            background: 'oklch(0.58 0.20 28 / 0.08)',
+            border: '1px solid oklch(0.58 0.20 28 / 0.25)',
+            fontSize: 12, color: 'var(--danger)',
+          }}>{error}</div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function UserRow({
+  profile, onEdit, onRoleChange,
+}: {
+  profile: Profile;
+  onEdit: () => void;
+  onRoleChange: (role: Profile['role']) => Promise<void>;
+}) {
+  const [saving, setSaving] = React.useState(false);
+
+  const handleRoleChange = async (newRole: string) => {
+    setSaving(true);
+    try { await onRoleChange(newRole as Profile['role']); }
+    finally { setSaving(false); }
+  };
+
+  const detail = profile.role === 'consultant' ? profile.job_title
+    : profile.role === 'customer' ? profile.company
+    : null;
+
+  const roleBadgeColor = profile.role === 'admin' ? 'var(--accent)'
+    : profile.role === 'consultant' ? 'oklch(0.58 0.14 250)'
+    : 'var(--text-3)';
+
+  return (
+    <tr style={{ borderTop: '1px solid var(--border)' }}>
+      <Td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Avatar name={profile.name} size={28} />
+          <div>
+            <div style={{ fontWeight: 500, color: 'var(--text-1)', fontSize: 13 }}>{profile.name}</div>
+            {detail && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{detail}</div>}
+          </div>
+        </div>
+      </Td>
+      <Td>
+        <select
+          value={profile.role}
+          disabled={saving}
+          onChange={(e) => handleRoleChange(e.target.value)}
+          style={{
+            height: 28, padding: '0 24px 0 8px',
+            background: 'var(--surface-0)',
+            border: '1px solid var(--border)',
+            borderRadius: 6, fontSize: 12,
+            color: roleBadgeColor,
+            fontFamily: 'inherit', cursor: 'pointer',
+            opacity: saving ? 0.5 : 1,
+            appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 7px center',
+          }}
+        >
+          {ROLE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </Td>
+      <Td align="right">
+        <button
+          onClick={onEdit}
+          title="Edit user details"
+          style={{
+            width: 28, height: 28, borderRadius: 6,
+            background: 'transparent', border: 0,
+            color: 'var(--text-3)', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--text-1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+        >
+          <IconEdit size={13} />
+        </button>
+      </Td>
+    </tr>
+  );
+}
+
+function UserManagementCard({
+  profiles, onUpdateProfile,
+}: {
+  profiles: Profile[];
+  onUpdateProfile: (id: string, updates: Partial<Omit<Profile, 'id'>>) => Promise<void>;
+}) {
+  const [editingProfile, setEditingProfile] = React.useState<Profile | null>(null);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Users"
+        subtitle={`${profiles.length} user${profiles.length !== 1 ? 's' : ''} — change roles inline or click edit for full details.`} />
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{
+            background: 'var(--surface-0)', color: 'var(--text-3)',
+            fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em',
+          }}>
+            <Th>User</Th>
+            <Th>Role</Th>
+            <Th width={48} />
+          </tr>
+        </thead>
+        <tbody>
+          {profiles.map((p) => (
+            <UserRow
+              key={p.id}
+              profile={p}
+              onEdit={() => setEditingProfile(p)}
+              onRoleChange={(role) => onUpdateProfile(p.id, { role })} />
+          ))}
+        </tbody>
+      </table>
+      <UserEditModal
+        open={editingProfile !== null}
+        profile={editingProfile}
+        onClose={() => setEditingProfile(null)}
+        onSave={(updates) => onUpdateProfile(editingProfile!.id, updates)} />
+    </Card>
+  );
+}
+
 // ── AdminView ─────────────────────────────────────────────────────────────────
 
 export default function AdminView({
   projects, setProjects, logs, setLogs,
-  consultants, customers, selectedProjectId, setSelectedProjectId,
+  consultants, customers, profiles, onUpdateProfile,
+  selectedProjectId, setSelectedProjectId,
 }: {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
@@ -631,6 +839,8 @@ export default function AdminView({
   setLogs: React.Dispatch<React.SetStateAction<Log[]>>;
   consultants: Consultant[];
   customers: Customer[];
+  profiles: Profile[];
+  onUpdateProfile: (id: string, updates: Partial<Omit<Profile, 'id'>>) => Promise<void>;
   selectedProjectId: string;
   setSelectedProjectId: (id: string) => void;
 }) {
@@ -727,6 +937,9 @@ export default function AdminView({
           onLog={() => setLogFor(selectedProject)}
           onEdit={() => setEditingProject(selectedProject)} />
       )}
+
+      {/* User management */}
+      <UserManagementCard profiles={profiles} onUpdateProfile={onUpdateProfile} />
 
       {/* Modals */}
       <ProjectFormModal

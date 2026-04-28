@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
-import { fetchProfile, fetchAppData, saveProject, deleteProject, addLog, removeLog } from './lib/db';
+import { fetchProfile, fetchAppData, saveProject, deleteProject, addLog, removeLog, updateProfile } from './lib/db';
 import type { Profile, AppData } from './lib/db';
 import type { Project, Consultant, Customer, Log } from './data';
 import { projectUsage } from './data';
@@ -199,7 +199,7 @@ export default function App() {
   if (state.phase === 'unauthenticated') return <LoginPage onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => session && loadApp(session))} />;
 
   const { profile, data } = state;
-  const { projects, logs, consultants, customers } = data;
+  const { projects, logs, consultants, customers, profiles } = data;
   const effectiveRole: Role = previewRole ?? profile.role;
 
   // For previewing consultant/customer views, admin sees from first assigned user's perspective
@@ -265,6 +265,11 @@ export default function App() {
     await reload();
   };
 
+  const wrappedUpdateProfile = async (userId: string, updates: Partial<Omit<Profile, 'id'>>) => {
+    await updateProfile(userId, updates);
+    await reload();
+  };
+
   // Suppress unused
   void handleSetProjects;
   void handleSetLogs;
@@ -284,6 +289,7 @@ export default function App() {
             projects={projects} setProjects={wrappedSetProjects}
             logs={logs} setLogs={wrappedSetLogs}
             consultants={consultants} customers={customers}
+            profiles={profiles} onUpdateProfile={wrappedUpdateProfile}
             selectedProjectId={selectedProjectId}
             setSelectedProjectId={(id) => setTweak('selectedProjectId', id)} />
         )}
