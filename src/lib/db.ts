@@ -129,7 +129,7 @@ export async function saveProject(project: Project): Promise<string> {
     included_hours: project.includedHours,
     overage_rate: project.overageRate,
     start_date: project.startDate,
-    end_date: project.endDate || null,
+    ...(project.endDate ? { end_date: project.endDate } : {}),
     notes: project.notes,
   };
 

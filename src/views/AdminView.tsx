@@ -858,8 +858,7 @@ export default function AdminView({
     if (proj.id) {
       setProjects((ps) => ps.map((p) => p.id === proj.id ? proj : p));
     } else {
-      const id = 'p' + (Date.now() % 100000);
-      setProjects((ps) => [...ps, { ...proj, id }]);
+      setProjects((ps) => [...ps, proj]);
     }
     setEditingProject(null);
   };
