@@ -8,6 +8,7 @@ export interface Project {
   consultants: string[];
   customers: string[];
   startDate: string;
+  endDate: string;
   notes: string;
 }
 
@@ -52,6 +53,7 @@ export const SEED_PROJECTS: Project[] = [
     consultants: ['c1', 'c2'],
     customers: ['u1'],
     startDate: '2026-04-01',
+    endDate: '2026-06-30',
     notes: 'Quarterly strategy + implementation review.',
   },
   {
@@ -64,6 +66,7 @@ export const SEED_PROJECTS: Project[] = [
     consultants: ['c2', 'c3'],
     customers: ['u2'],
     startDate: '2026-04-08',
+    endDate: '2026-07-31',
     notes: 'Data pipeline design + onboarding.',
   },
   {
@@ -76,6 +79,7 @@ export const SEED_PROJECTS: Project[] = [
     consultants: ['c1', 'c3'],
     customers: ['u3'],
     startDate: '2026-03-15',
+    endDate: '2026-09-15',
     notes: 'Rollout support, training, weekly office hours.',
   },
 ];
