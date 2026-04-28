@@ -6,7 +6,6 @@ import type { Profile, AppData } from './lib/db';
 import type { Project, Consultant, Customer, Log } from './data';
 import { projectUsage } from './data';
 import { Avatar } from './components/ui';
-import { TweaksPanel, TweakSection, TweakRadio, TweakSelect, useTweaks } from './components/TweaksPanel';
 import LoginPage from './components/LoginPage';
 import SetPasswordPage from './components/SetPasswordPage';
 import AdminView from './views/AdminView';
@@ -23,15 +22,7 @@ function LoadingScreen() {
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'var(--bg)', flexDirection: 'column', gap: 16,
     }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: 10, background: 'var(--accent)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a0f08',
-      }}>
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="8" cy="8" r="5.5" /><path d="M8 5v3l2 1.5" />
-        </svg>
-      </div>
+      <img src="/logo.svg" alt="Conlog" style={{ width: 48, height: 48 }} />
       <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Loading…</div>
     </div>
   );
@@ -77,15 +68,7 @@ function TopBar({
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: 7, background: 'var(--accent)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#1a0f08',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="8" r="5.5" /><path d="M8 5v3l2 1.5" />
-            </svg>
-          </div>
+          <img src="/logo.svg" alt="Conlog" style={{ width: 28, height: 28 }} />
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
             <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.01em' }}>Consultation Log</span>
             <span style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 2 }}>
@@ -154,7 +137,7 @@ type AppPhase =
 export default function App() {
   const [state, setState] = React.useState<AppPhase>({ phase: 'loading' });
   const [previewRole, setPreviewRole] = React.useState<Role | null>(null);
-  const [tweaks, setTweak] = useTweaks({ selectedProjectId: '' });
+  const [selectedProjectId, setSelectedProjectId] = React.useState('');
   // Detect invite / password-reset links (token is in the URL hash on first load)
   const [needsPassword, setNeedsPassword] = React.useState(
     () => window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery')
@@ -181,8 +164,8 @@ export default function App() {
     ]);
     if (!profile) { setState({ phase: 'unauthenticated' }); return; }
     // Default selected project to first one
-    if (!tweaks.selectedProjectId && data.projects.length > 0) {
-      setTweak('selectedProjectId', data.projects[0].id);
+    if (!selectedProjectId && data.projects.length > 0) {
+      setSelectedProjectId(data.projects[0].id);
     }
     setState({ phase: 'ready', profile, data });
   }
@@ -207,27 +190,16 @@ export default function App() {
     : consultants[0]?.id ?? '';
   const currentCustomerId = (() => {
     if (profile.role === 'customer') return profile.id;
-    const proj = projects.find((p) => p.id === tweaks.selectedProjectId);
+    const proj = projects.find((p) => p.id === selectedProjectId);
     return proj?.customers[0] ?? customers[0]?.id ?? '';
   })();
 
   // Keep selected project valid
-  const selectedProjectId = projects.find((p) => p.id === tweaks.selectedProjectId)
-    ? tweaks.selectedProjectId
+  const resolvedProjectId = projects.find((p) => p.id === selectedProjectId)
+    ? selectedProjectId
     : projects[0]?.id ?? '';
 
   // ── Mutation wrappers (update Supabase then reload) ─────────────────────────
-  const handleSetProjects: React.Dispatch<React.SetStateAction<Project[]>> = (updater) => {
-    // optimistic local update
-    const next = typeof updater === 'function' ? updater(projects) : updater;
-    setState({ ...state, data: { ...data, projects: next } });
-  };
-
-  const handleSetLogs: React.Dispatch<React.SetStateAction<Log[]>> = (updater) => {
-    const next = typeof updater === 'function' ? updater(logs) : updater;
-    setState({ ...state, data: { ...data, logs: next } });
-  };
-
   // Patch AdminView's onSave/onDelete to also persist to Supabase
   const wrappedSetProjects: React.Dispatch<React.SetStateAction<Project[]>> = async (updater) => {
     const prev = projects;
@@ -273,10 +245,6 @@ export default function App() {
     await reload();
   };
 
-  // Suppress unused
-  void handleSetProjects;
-  void handleSetLogs;
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <TopBar
@@ -293,48 +261,26 @@ export default function App() {
             logs={logs} setLogs={wrappedSetLogs}
             consultants={consultants} customers={customers}
             profiles={profiles} onUpdateProfile={wrappedUpdateProfile}
-            selectedProjectId={selectedProjectId}
-            setSelectedProjectId={(id) => setTweak('selectedProjectId', id)} />
+            selectedProjectId={resolvedProjectId}
+            setSelectedProjectId={setSelectedProjectId} />
         )}
         {effectiveRole === 'consultant' && (
           <ConsultantView
             projects={projects} logs={logs} setLogs={wrappedSetLogs}
             consultants={consultants} customers={customers}
             currentConsultantId={currentConsultantId}
-            selectedProjectId={selectedProjectId}
-            setSelectedProjectId={(id) => setTweak('selectedProjectId', id)} />
+            selectedProjectId={resolvedProjectId}
+            setSelectedProjectId={setSelectedProjectId} />
         )}
         {effectiveRole === 'customer' && (
           <CustomerView
             projects={projects} logs={logs}
             consultants={consultants} customers={customers}
             currentCustomerId={currentCustomerId}
-            selectedProjectId={selectedProjectId}
-            setSelectedProjectId={(id) => setTweak('selectedProjectId', id)} />
+            selectedProjectId={resolvedProjectId}
+            setSelectedProjectId={setSelectedProjectId} />
         )}
       </main>
-
-      {/* Tweaks panel — admin only, to switch preview */}
-      {profile.role === 'admin' && (
-        <TweaksPanel title="Preview">
-          <TweakSection label="View as" />
-          <TweakRadio label="Role" value={previewRole ?? 'admin'}
-            options={[
-              { value: 'admin', label: 'Admin' },
-              { value: 'consultant', label: 'Consultant' },
-              { value: 'customer', label: 'Customer' },
-            ]}
-            onChange={(v) => setPreviewRole(v === 'admin' ? null : v as Role)} />
-          <TweakSection label="Active project" />
-          <TweakSelect label="Project" value={selectedProjectId}
-            options={projects.map((p) => {
-              const u = projectUsage(p, logs);
-              const tag = u.overHours > 0 ? ' (over)' : u.pct >= 80 ? ' (near limit)' : '';
-              return { value: p.id, label: `${p.name}${tag}` };
-            })}
-            onChange={(v) => setTweak('selectedProjectId', v)} />
-        </TweaksPanel>
-      )}
     </div>
   );
 }
