@@ -8,6 +8,7 @@ import { projectUsage } from './data';
 import { Avatar } from './components/ui';
 import { TweaksPanel, TweakSection, TweakRadio, TweakSelect, useTweaks } from './components/TweaksPanel';
 import LoginPage from './components/LoginPage';
+import SetPasswordPage from './components/SetPasswordPage';
 import AdminView from './views/AdminView';
 import ConsultantView from './views/ConsultantView';
 import CustomerView from './views/CustomerView';
@@ -154,6 +155,10 @@ export default function App() {
   const [state, setState] = React.useState<AppPhase>({ phase: 'loading' });
   const [previewRole, setPreviewRole] = React.useState<Role | null>(null);
   const [tweaks, setTweak] = useTweaks({ selectedProjectId: '' });
+  // Detect invite / password-reset links (token is in the URL hash on first load)
+  const [needsPassword, setNeedsPassword] = React.useState(
+    () => window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery')
+  );
 
   // ── Auth bootstrap ──────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -190,6 +195,7 @@ export default function App() {
 
   // ── Early returns ───────────────────────────────────────────────────────────
   if (state.phase === 'loading') return <LoadingScreen />;
+  if (needsPassword) return <SetPasswordPage onDone={() => { setNeedsPassword(false); supabase.auth.getSession().then(({ data: { session } }) => session && loadApp(session)); }} />;
   if (state.phase === 'unauthenticated') return <LoginPage onLogin={() => supabase.auth.getSession().then(({ data: { session } }) => session && loadApp(session))} />;
 
   const { profile, data } = state;
