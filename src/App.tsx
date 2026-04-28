@@ -246,6 +246,7 @@ export default function App() {
       ]);
     } catch (err) {
       console.error('saveProject error', err);
+      alert(`Failed to save project: ${(err as Error).message}`);
     }
     await reload();
   };

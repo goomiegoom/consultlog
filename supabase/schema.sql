@@ -22,6 +22,7 @@ CREATE TABLE projects (
   included_hours   NUMERIC NOT NULL DEFAULT 10,
   overage_rate     NUMERIC NOT NULL DEFAULT 2500,
   start_date       DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date         DATE,
   notes            TEXT NOT NULL DEFAULT '',
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );
