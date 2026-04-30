@@ -46,6 +46,11 @@ export default function CustomerView({
   const status = statusForUsage(u);
   const projectLogs = logs.filter((l) => l.projectId === proj.id)
     .sort((a, b) => b.date.localeCompare(a.date));
+  const now = new Date();
+  const cycleLogs = projectLogs.filter((l) => {
+    const d = new Date(l.date + 'T00:00:00');
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -149,13 +154,13 @@ export default function CustomerView({
 
         {/* Mini stats */}
         <div style={{ display: 'grid', gridTemplateColumns: mob ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', borderTop: '1px solid var(--border)' }}>
-          <MiniStat label="Meetings this cycle" value={projectLogs.length.toString()} />
+          <MiniStat label="Meetings this cycle" value={cycleLogs.length.toString()} />
           <MiniStat label="Avg. meeting"
-            value={projectLogs.length ? fmtHrs(u.used / projectLogs.length) : '—'}
-            suffix={projectLogs.length ? 'h' : undefined} />
+            value={cycleLogs.length ? fmtHrs(u.used / cycleLogs.length) : '—'}
+            suffix={cycleLogs.length ? 'h' : undefined} />
           <div style={{ gridColumn: mob ? '1 / -1' : undefined }}>
             <MiniStat label="Last meeting"
-              value={projectLogs[0] ? fmtDate(projectLogs[0].date) : '—'} />
+              value={cycleLogs[0] ? fmtDate(cycleLogs[0].date) : '—'} />
           </div>
         </div>
       </Card>
