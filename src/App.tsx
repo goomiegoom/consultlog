@@ -203,19 +203,28 @@ export default function App() {
   const wrappedSetProjects: React.Dispatch<React.SetStateAction<Project[]>> = async (updater) => {
     const prev = projects;
     const next = typeof updater === 'function' ? updater(prev) : updater;
-    // Optimistic update so the UI responds immediately
-    setState((s) => s.phase === 'ready' ? { ...s, data: { ...s.data, projects: next } } : s);
-    const added = next.filter((p) => !prev.find((x) => x.id === p.id));
     const removed = prev.filter((p) => !next.find((x) => x.id === p.id));
+    const removedIds = new Set(removed.map((p) => p.id));
+    // Optimistic update: remove projects and their logs together
+    setState((s) => s.phase === 'ready' ? {
+      ...s, data: {
+        ...s.data,
+        projects: next,
+        logs: removedIds.size ? s.data.logs.filter((l) => !removedIds.has(l.projectId)) : s.data.logs,
+      },
+    } : s);
+    const added = next.filter((p) => !prev.find((x) => x.id === p.id));
     const updated = next.filter((p) => {
       const old = prev.find((x) => x.id === p.id);
       return old && JSON.stringify(old) !== JSON.stringify(p);
     });
+    const removedLogs = logs.filter((l) => removedIds.has(l.projectId));
     try {
       await Promise.all([
         ...added.map((p) => saveProject(p)),
         ...updated.map((p) => saveProject(p)),
         ...removed.map((p) => deleteProject(p.id)),
+        ...removedLogs.map((l) => removeLog(l.id)),
       ]);
     } catch (err) {
       console.error('saveProject error', err);

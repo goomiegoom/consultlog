@@ -880,7 +880,6 @@ export default function AdminView({
 
   const onDelete = (id: string) => {
     setProjects((ps) => ps.filter((p) => p.id !== id));
-    setLogs((ls) => ls.filter((l) => l.projectId !== id));
     setConfirmDel(null);
     if (selectedProjectId === id && projects.length > 1) {
       const next = projects.find((p) => p.id !== id);
