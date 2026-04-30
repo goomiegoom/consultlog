@@ -99,7 +99,9 @@ export function LogMeetingModal({
   const set = <K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) =>
     setDraft({ ...draft, [k]: v });
   const valid = draft.hours > 0 && !!draft.date && !!draft.consultantId;
-  const teamConsultants = consultants.filter((c) => project.consultants.includes(c.id));
+  const teamConsultants = project.consultants.length > 0
+    ? consultants.filter((c) => project.consultants.includes(c.id))
+    : consultants;
 
   return (
     <Modal open={open} onClose={onClose}
@@ -256,7 +258,7 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
         </svg>
       </button>
       {open && ReactDOM.createPortal(
-        <div style={{
+        <div onMouseDown={(e) => e.stopPropagation()} style={{
           position: 'fixed', top: menuPos.top, right: menuPos.right,
           background: 'var(--surface-1)', border: '1px solid var(--border)',
           borderRadius: 8, padding: 4, minWidth: 140, zIndex: 9999,
