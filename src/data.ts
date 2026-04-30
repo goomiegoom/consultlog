@@ -126,9 +126,16 @@ export const SEED_LOGS: Log[] = [
 export const fmtTHB = (n: number) => '฿' + Math.round(n).toLocaleString('en-US');
 export const fmtHrs = (n: number) => (Math.round(n * 10) / 10).toString();
 
-export function projectUsage(project: Project, logs: Log[]): ProjectUsage {
+export function projectUsage(project: Project, logs: Log[], cycleDate?: Date): ProjectUsage {
+  const ref = cycleDate ?? new Date();
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
   const used = logs
-    .filter((l) => l.projectId === project.id && l.billable)
+    .filter((l) => {
+      if (l.projectId !== project.id || !l.billable) return false;
+      const d = new Date(l.date + 'T00:00:00');
+      return d.getFullYear() === year && d.getMonth() === month;
+    })
     .reduce((s, l) => s + l.hours, 0);
   const remaining = Math.max(0, project.includedHours - used);
   const overHours = Math.max(0, used - project.includedHours);

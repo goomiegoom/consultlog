@@ -27,11 +27,16 @@ export default function ConsultantView({
     setLogFor(null);
   };
 
+  const now = new Date();
   const myLogs = logs
     .filter((l) => l.consultantId === currentConsultantId)
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 8);
-  const myHoursThisCycle = myLogs.reduce((s, l) => s + l.hours, 0);
+  const myHoursThisCycle = logs.filter((l) => {
+    if (l.consultantId !== currentConsultantId) return false;
+    const d = new Date(l.date + 'T00:00:00');
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).reduce((s, l) => s + l.hours, 0);
 
   // Suppress unused warning — customers prop is passed through but not directly used in this view
   void customers;

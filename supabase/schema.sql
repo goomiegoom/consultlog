@@ -40,7 +40,7 @@ CREATE TABLE project_members (
 CREATE TABLE logs (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id    UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  consultant_id UUID NOT NULL REFERENCES profiles(id),
+  consultant_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   date          DATE NOT NULL,
   hours         NUMERIC NOT NULL CHECK (hours > 0),
   billable      BOOLEAN NOT NULL DEFAULT TRUE,
