@@ -1,4 +1,3 @@
-import React from 'react';
 import { Project, Consultant, Customer, Log, projectUsage, fmtTHB, fmtHrs, fmtDate, fmtDateLong } from '../data';
 import { Avatar, ProgressBar, Select, StatusPill, statusForUsage, useIsMobile, IconWarning } from '../components/ui';
 import { Card, CardHeader, EmptyHint } from './AdminView';
