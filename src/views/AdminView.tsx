@@ -6,7 +6,7 @@ import {
 } from '../data';
 import {
   Avatar, ProgressBar, Modal, Button, Field, Input, Textarea, Select, Toggle,
-  StatusPill, statusForUsage,
+  StatusPill, statusForUsage, useIsMobile,
   IconPlus, IconEdit, IconTrash, IconClock,
 } from '../components/ui';
 import type { Profile } from '../lib/db';
@@ -35,7 +35,8 @@ export function CardHeader({
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-      padding: '14px 18px', borderBottom: '1px solid var(--border)', gap: 16,
+      flexWrap: 'wrap',
+      padding: '14px 18px', borderBottom: '1px solid var(--border)', gap: 10,
     }}>
       <div>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{title}</div>
@@ -95,6 +96,7 @@ export function LogMeetingModal({
     });
   }, [open, project, defaultConsultantId, lockedConsultantId]);
 
+  const mob = useIsMobile();
   if (!draft || !project) return null;
   const set = <K extends keyof typeof draft>(k: K, v: (typeof draft)[K]) =>
     setDraft({ ...draft, [k]: v });
@@ -114,7 +116,7 @@ export function LogMeetingModal({
         </>
       }>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 1fr', gap: 10 }}>
           <Field label="Date">
             <Input type="date" value={draft.date} onChange={(v) => set('date', v as string)} />
           </Field>
@@ -289,7 +291,8 @@ function ProjectsTable({
   onDelete: (p: Project) => void;
 }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+    <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse', fontSize: 13 }}>
       <thead>
         <tr style={{
           background: 'var(--surface-0)', color: 'var(--text-3)',
@@ -376,6 +379,7 @@ function ProjectsTable({
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -444,6 +448,7 @@ function ProjectFormModal({
     });
   }, [open, project]);
 
+  const mob = useIsMobile();
   if (!draft) return null;
   const set = <K extends keyof Project>(k: K, v: Project[K]) => setDraft({ ...draft, [k]: v });
   const toggleId = (key: 'consultants' | 'customers', id: string) => {
@@ -468,7 +473,7 @@ function ProjectFormModal({
         <Field label="Project name">
           <Input value={draft.name} onChange={(v) => set('name', v as string)} placeholder="e.g. Project Delphi" />
         </Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 1fr', gap: 10 }}>
           <Field label="Customer / company">
             <Input value={draft.customer} onChange={(v) => set('customer', v as string)} placeholder="Acme Corp" />
           </Field>
@@ -476,7 +481,7 @@ function ProjectFormModal({
             <Input value={draft.customerContact} onChange={(v) => set('customerContact', v as string)} placeholder="email@acme.com" />
           </Field>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 1fr', gap: 10 }}>
           <Field label="Included hours">
             <Input type="number" value={draft.includedHours} onChange={(v) => set('includedHours', v as number)} suffix="h" />
           </Field>
@@ -484,7 +489,7 @@ function ProjectFormModal({
             <Input type="number" value={draft.overageRate} onChange={(v) => set('overageRate', v as number)} suffix="฿/h" />
           </Field>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 1fr', gap: 10 }}>
           <Field label="Start date">
             <Input type="date" value={draft.startDate} onChange={(v) => set('startDate', v as string)} />
           </Field>
@@ -549,6 +554,7 @@ function ProjectDetail({
   onLog: () => void;
   onEdit: () => void;
 }) {
+  const mob = useIsMobile();
   const u = projectUsage(project, logs);
   const projectLogs = logs.filter((l) => l.projectId === project.id)
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -572,7 +578,7 @@ function ProjectDetail({
           </div>
         } />
 
-      <div style={{ padding: '18px 18px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ padding: '18px 18px 8px', display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 1fr', gap: 24 }}>
         <div>
           <SectionLabel>Hour usage this cycle</SectionLabel>
           <div style={{
@@ -612,19 +618,32 @@ function ProjectDetail({
               const c = consultants.find((x) => x.id === l.consultantId);
               return (
                 <div key={l.id} style={{
-                  display: 'grid', gridTemplateColumns: '90px 1fr auto auto auto',
-                  alignItems: 'center', gap: 12,
-                  padding: '10px 14px',
+                  display: 'grid',
+                  gridTemplateColumns: mob ? '1fr auto' : '90px 1fr auto auto auto',
+                  alignItems: 'center', gap: mob ? 8 : 12,
+                  padding: mob ? '10px 12px' : '10px 14px',
                   borderTop: i === 0 ? 'none' : '1px solid var(--border)',
                   fontSize: 13,
                 }}>
-                  <div style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtDate(l.date)}</div>
-                  <div>
-                    <div style={{ color: 'var(--text-1)' }}>{l.topic || 'Meeting'}</div>
-                    {c && <div style={{ color: 'var(--text-3)', fontSize: 11, marginTop: 1 }}>{c.name}</div>}
-                  </div>
-                  <span style={{ color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{fmtHrs(l.hours)}h</span>
-                  <StatusPill tone="muted">{l.billable ? 'Billable' : 'Non-billable'}</StatusPill>
+                  {mob ? (
+                    <div>
+                      <div style={{ color: 'var(--text-1)' }}>{l.topic || 'Meeting'}</div>
+                      <div style={{ color: 'var(--text-3)', fontSize: 11, marginTop: 2 }}>
+                        {fmtDate(l.date)}{c ? ` · ${c.name}` : ''} · {fmtHrs(l.hours)}h
+                        {' '}· {l.billable ? 'Billable' : 'Non-billable'}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{fmtDate(l.date)}</div>
+                      <div>
+                        <div style={{ color: 'var(--text-1)' }}>{l.topic || 'Meeting'}</div>
+                        {c && <div style={{ color: 'var(--text-3)', fontSize: 11, marginTop: 1 }}>{c.name}</div>}
+                      </div>
+                      <span style={{ color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{fmtHrs(l.hours)}h</span>
+                      <StatusPill tone="muted">{l.billable ? 'Billable' : 'Non-billable'}</StatusPill>
+                    </>
+                  )}
                   <button onClick={() => removeLog(l.id)} title="Remove" style={{
                     background: 'transparent', border: 0, color: 'var(--text-3)',
                     cursor: 'pointer', padding: 4, borderRadius: 4,
@@ -867,6 +886,7 @@ export default function AdminView({
   selectedProjectId: string;
   setSelectedProjectId: (id: string) => void;
 }) {
+  const mob = useIsMobile();
   const [editingProject, setEditingProject] = React.useState<Project | 'new' | null>(null);
   const [logFor, setLogFor] = React.useState<Project | null>(null);
   const [confirmDel, setConfirmDel] = React.useState<Project | null>(null);
@@ -924,7 +944,7 @@ export default function AdminView({
 
       {/* Stat strip */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+        display: 'grid', gridTemplateColumns: mob ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
         gap: 1, background: 'var(--border)', border: '1px solid var(--border)',
         borderRadius: 10, overflow: 'hidden',
       }}>

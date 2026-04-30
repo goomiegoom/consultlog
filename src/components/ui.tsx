@@ -172,7 +172,7 @@ export function Modal({
       padding: 24, animation: 'fade .15s ease-out',
     }}>
       <div onClick={(e) => e.stopPropagation()} style={{
-        width, maxWidth: '100%', maxHeight: 'calc(100vh - 48px)',
+        width, maxWidth: 'min(100%, calc(100vw - 32px))', maxHeight: 'calc(100vh - 48px)',
         background: 'var(--surface-1)',
         border: '1px solid var(--border)',
         borderRadius: 12, overflow: 'hidden',
@@ -414,6 +414,16 @@ export function StatusPill({ tone, children }: { tone: PillTone; children: React
       whiteSpace: 'nowrap',
     }}>{children}</span>
   );
+}
+
+export function useIsMobile(bp = 640): boolean {
+  const [mobile, setMobile] = React.useState(() => window.innerWidth < bp);
+  React.useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < bp);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, [bp]);
+  return mobile;
 }
 
 export function statusForUsage({ pct, overHours }: { pct: number; overHours: number }) {

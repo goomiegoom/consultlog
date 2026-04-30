@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { fetchProfile, fetchAppData, saveProject, deleteProject, addLog, removeLog, updateProfile } from './lib/db';
 import type { Profile, AppData } from './lib/db';
 import type { Project, Consultant, Customer, Log } from './data';
-import { Avatar } from './components/ui';
+import { Avatar, useIsMobile } from './components/ui';
 import LoginPage from './components/LoginPage';
 import SetPasswordPage from './components/SetPasswordPage';
 import AdminView from './views/AdminView';
@@ -38,6 +38,7 @@ function TopBar({
   consultants: Consultant[];
   customers: Customer[];
 }) {
+  const mob = useIsMobile();
   const effectiveRole = previewRole ?? profile.role;
 
   const me: { name: string; subtitle: string } = effectiveRole === 'admin'
@@ -62,18 +63,20 @@ function TopBar({
     }}>
       <div style={{
         maxWidth: 1240, margin: '0 auto',
-        padding: '12px 32px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+        padding: mob ? '10px 16px' : '12px 32px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <img src="/logo.svg" alt="Conlog" style={{ width: 28, height: 28 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.01em' }}>Consultation Log</span>
-            <span style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 2 }}>
-              {profile.role}
-            </span>
-          </div>
+          {!mob && (
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.01em' }}>Consultation Log</span>
+              <span style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 2 }}>
+                {profile.role}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Role preview tabs — admin only */}
@@ -84,12 +87,14 @@ function TopBar({
             borderRadius: 8,
           }}>
             {([null, 'consultant', 'customer'] as (Role | null)[]).map((r) => {
-              const label = r === null ? 'Admin' : r.charAt(0).toUpperCase() + r.slice(1);
+              const label = mob
+                ? (r === null ? 'A' : r === 'consultant' ? 'C' : 'Cu')
+                : (r === null ? 'Admin' : r.charAt(0).toUpperCase() + r.slice(1));
               const active = (previewRole ?? null) === r;
               return (
                 <button key={String(r)} onClick={() => setPreviewRole(r)}
                   style={{
-                    padding: '6px 14px',
+                    padding: mob ? '6px 10px' : '6px 14px',
                     background: active ? 'var(--surface-3)' : 'transparent',
                     color: active ? 'var(--text-1)' : 'var(--text-3)',
                     border: 0, borderRadius: 6, fontSize: 12, fontWeight: 500,
@@ -104,21 +109,23 @@ function TopBar({
         )}
 
         {/* User + sign out */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ textAlign: 'right', lineHeight: 1.1 }}>
-            <div style={{ fontSize: 12, fontWeight: 500 }}>{me.name}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{me.subtitle}</div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: mob ? 8 : 12, flexShrink: 0 }}>
+          {!mob && (
+            <div style={{ textAlign: 'right', lineHeight: 1.1 }}>
+              <div style={{ fontSize: 12, fontWeight: 500 }}>{me.name}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{me.subtitle}</div>
+            </div>
+          )}
           <Avatar name={me.name} size={30} />
           <button onClick={handleSignOut} style={{
-            height: 28, padding: '0 10px', borderRadius: 6,
+            height: 32, padding: '0 10px', borderRadius: 6,
             background: 'transparent', border: '1px solid var(--border)',
-            color: 'var(--text-3)', fontSize: 11, fontFamily: 'inherit',
+            color: 'var(--text-3)', fontSize: 12, fontFamily: 'inherit',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-            Sign out
+            {mob ? '↩' : 'Sign out'}
           </button>
         </div>
       </div>
@@ -134,6 +141,7 @@ type AppPhase =
   | { phase: 'ready'; profile: Profile; data: AppData };
 
 export default function App() {
+  const mob = useIsMobile();
   const [state, setState] = React.useState<AppPhase>({ phase: 'loading' });
   const [previewRole, setPreviewRole] = React.useState<Role | null>(null);
   const [selectedProjectId, setSelectedProjectId] = React.useState('');
@@ -261,7 +269,7 @@ export default function App() {
 
       <main style={{
         maxWidth: 1240, width: '100%', margin: '0 auto',
-        padding: '32px 32px 64px', flex: 1,
+        padding: mob ? '20px 16px 48px' : '32px 32px 64px', flex: 1,
       }}>
         {effectiveRole === 'admin' && (
           <AdminView

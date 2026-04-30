@@ -1,6 +1,6 @@
 import React from 'react';
 import { Project, Consultant, Customer, Log, projectUsage, fmtTHB, fmtHrs, fmtDate } from '../data';
-import { ProgressBar, Button, StatusPill, statusForUsage, IconPlus } from '../components/ui';
+import { ProgressBar, Button, StatusPill, statusForUsage, useIsMobile, IconPlus } from '../components/ui';
 import { Card, CardHeader, SectionLabel, EmptyHint, LogMeetingModal } from './AdminView';
 
 export default function ConsultantView({
@@ -16,6 +16,7 @@ export default function ConsultantView({
   selectedProjectId: string;
   setSelectedProjectId: (id: string) => void;
 }) {
+  const mob = useIsMobile();
   const [logFor, setLogFor] = React.useState<Project | null>(null);
   const me = consultants.find((c) => c.id === currentConsultantId)!;
   const myProjects = projects.filter((p) => p.consultants.includes(currentConsultantId));
@@ -54,7 +55,7 @@ export default function ConsultantView({
       {/* My projects grid */}
       <div>
         <SectionLabel>My projects</SectionLabel>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${mob ? '260px' : '320px'}, 1fr))`, gap: 12 }}>
           {myProjects.map((p) => {
             const u = projectUsage(p, logs);
             const status = statusForUsage(u);
@@ -101,7 +102,7 @@ export default function ConsultantView({
       </div>
 
       {/* Selected project + my recent logs */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: mob ? '1fr' : '1fr 360px', gap: 16, alignItems: 'flex-start' }}>
         {(() => {
           const proj = myProjects.find((p) => p.id === selectedProjectId) || myProjects[0];
           if (!proj) return <div />;
@@ -123,17 +124,30 @@ export default function ConsultantView({
                   const isMine = l.consultantId === currentConsultantId;
                   return (
                     <div key={l.id} style={{
-                      display: 'grid', gridTemplateColumns: '70px 1fr auto auto',
-                      alignItems: 'center', gap: 12, padding: '8px 4px',
+                      display: 'grid',
+                      gridTemplateColumns: mob ? '1fr auto' : '70px 1fr auto auto',
+                      alignItems: 'center', gap: mob ? 8 : 12, padding: '8px 4px',
                       borderTop: i === 0 ? 'none' : '1px solid var(--border)',
                       fontSize: 13,
                     }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)' }}>{fmtDate(l.date)}</span>
-                      <span style={{ color: 'var(--text-1)' }}>
-                        {l.topic || 'Meeting'}
-                        {isMine && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--accent)' }}>· you</span>}
-                      </span>
-                      <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{c?.name}</span>
+                      {mob ? (
+                        <span style={{ color: 'var(--text-1)' }}>
+                          {l.topic || 'Meeting'}
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
+                            {fmtDate(l.date)}{c ? ` · ${c.name}` : ''}
+                            {isMine && <span style={{ color: 'var(--accent)' }}> · you</span>}
+                          </span>
+                        </span>
+                      ) : (
+                        <>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)' }}>{fmtDate(l.date)}</span>
+                          <span style={{ color: 'var(--text-1)' }}>
+                            {l.topic || 'Meeting'}
+                            {isMine && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--accent)' }}>· you</span>}
+                          </span>
+                          <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{c?.name}</span>
+                        </>
+                      )}
                       <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-2)' }}>{fmtHrs(l.hours)}h</span>
                     </div>
                   );
