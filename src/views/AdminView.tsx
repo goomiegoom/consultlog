@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {
   Project, Consultant, Customer, Log,
   projectUsage, fmtTHB, fmtHrs, fmtDate, fmtDateLong,
@@ -220,17 +221,30 @@ function MenuItem({
 
 function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = React.useState({ top: 0, right: 0 });
+  const btnRef = React.useRef<HTMLButtonElement>(null);
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    }
+    setOpen((v) => !v);
+  };
+
   React.useEffect(() => {
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (btnRef.current && btnRef.current.contains(e.target as Node)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+  }, [open]);
+
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{
+    <>
+      <button ref={btnRef} onClick={toggle} style={{
         width: 28, height: 28, borderRadius: 6, background: 'transparent',
         border: 0, color: 'var(--text-3)', cursor: 'pointer',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -241,18 +255,19 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
           <circle cx="3" cy="8" r="1.3" /><circle cx="8" cy="8" r="1.3" /><circle cx="13" cy="8" r="1.3" />
         </svg>
       </button>
-      {open && (
+      {open && ReactDOM.createPortal(
         <div style={{
-          position: 'absolute', top: '100%', right: 0, marginTop: 4,
+          position: 'fixed', top: menuPos.top, right: menuPos.right,
           background: 'var(--surface-1)', border: '1px solid var(--border)',
-          borderRadius: 8, padding: 4, minWidth: 140, zIndex: 50,
+          borderRadius: 8, padding: 4, minWidth: 140, zIndex: 9999,
           boxShadow: '0 8px 24px rgba(0,0,0,.4)',
         }}>
           <MenuItem icon={<IconEdit size={13} />} onClick={() => { onEdit(); setOpen(false); }}>Edit project</MenuItem>
           <MenuItem icon={<IconTrash size={13} />} danger onClick={() => { onDelete(); setOpen(false); }}>Delete</MenuItem>
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   );
 }
 
