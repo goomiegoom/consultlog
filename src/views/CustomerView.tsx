@@ -1,5 +1,6 @@
+import React from 'react';
 import { Project, Consultant, Customer, Log, projectUsage, fmtTHB, fmtHrs, fmtDate, fmtDateLong } from '../data';
-import { Avatar, ProgressBar, Select, StatusPill, statusForUsage, IconWarning } from '../components/ui';
+import { Avatar, ProgressBar, Select, StatusPill, statusForUsage, useIsMobile, IconWarning } from '../components/ui';
 import { Card, CardHeader, EmptyHint } from './AdminView';
 
 function MiniStat({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
@@ -33,6 +34,7 @@ export default function CustomerView({
   selectedProjectId: string;
   setSelectedProjectId: (id: string) => void;
 }) {
+  const mob = useIsMobile();
   const me = customers.find((c) => c.id === currentCustomerId)!;
   const myProjects = projects.filter((p) => p.customers.includes(currentCustomerId));
   const proj = myProjects.find((p) => p.id === selectedProjectId) || myProjects[0];
@@ -66,7 +68,7 @@ export default function CustomerView({
 
       {/* Hero card */}
       <Card>
-        <div style={{ padding: '28px 28px 24px' }}>
+        <div style={{ padding: mob ? '20px 16px 18px' : '28px 28px 24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>
@@ -83,14 +85,14 @@ export default function CustomerView({
           </div>
 
           {/* Big numbers */}
-          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{
-                fontSize: 44, fontWeight: 500,
+                fontSize: mob ? 32 : 44, fontWeight: 500,
                 color: u.overHours > 0 ? 'var(--danger)' : 'var(--text-1)',
                 fontFamily: 'var(--font-mono)', letterSpacing: '-0.03em',
               }}>{fmtHrs(u.used)}</span>
-              <span style={{ fontSize: 16, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: mob ? 14 : 16, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
                 / {fmtHrs(proj.includedHours)}h
               </span>
             </div>
@@ -99,7 +101,7 @@ export default function CustomerView({
                 {u.overHours > 0 ? 'Extra charges accrued' : 'Remaining'}
               </div>
               <div style={{
-                fontSize: 22, fontWeight: 500,
+                fontSize: mob ? 16 : 22, fontWeight: 500,
                 color: u.overHours > 0 ? 'var(--danger)' : 'var(--text-1)',
                 fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em', marginTop: 2,
               }}>
@@ -147,13 +149,15 @@ export default function CustomerView({
         </div>
 
         {/* Mini stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: mob ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', borderTop: '1px solid var(--border)' }}>
           <MiniStat label="Meetings this cycle" value={projectLogs.length.toString()} />
           <MiniStat label="Avg. meeting"
             value={projectLogs.length ? fmtHrs(u.used / projectLogs.length) : '—'}
             suffix={projectLogs.length ? 'h' : undefined} />
-          <MiniStat label="Last meeting"
-            value={projectLogs[0] ? fmtDate(projectLogs[0].date) : '—'} />
+          <div style={{ gridColumn: mob ? '1 / -1' : undefined }}>
+            <MiniStat label="Last meeting"
+              value={projectLogs[0] ? fmtDate(projectLogs[0].date) : '—'} />
+          </div>
         </div>
       </Card>
 
@@ -161,24 +165,42 @@ export default function CustomerView({
       <Card>
         <CardHeader title="Meeting history" subtitle="Every consultation logged on this project." />
         <div>
-          <div style={{
-            display: 'grid', gridTemplateColumns: '100px 1fr auto auto',
-            gap: 12, padding: '10px 18px',
-            background: 'var(--surface-0)',
-            fontSize: 11, color: 'var(--text-3)',
-            textTransform: 'uppercase', letterSpacing: '.06em',
-            borderBottom: '1px solid var(--border)',
-          }}>
-            <div>Date</div>
-            <div>Topic</div>
-            <div>Consultant</div>
-            <div style={{ textAlign: 'right' }}>Duration</div>
-          </div>
+          {mob ? null : (
+            <div style={{
+              display: 'grid', gridTemplateColumns: '100px 1fr auto auto',
+              gap: 12, padding: '10px 18px',
+              background: 'var(--surface-0)',
+              fontSize: 11, color: 'var(--text-3)',
+              textTransform: 'uppercase', letterSpacing: '.06em',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <div>Date</div>
+              <div>Topic</div>
+              <div>Consultant</div>
+              <div style={{ textAlign: 'right' }}>Duration</div>
+            </div>
+          )}
           {projectLogs.length === 0 ? (
             <div style={{ padding: 24 }}><EmptyHint>No meetings logged yet.</EmptyHint></div>
           ) : projectLogs.map((l, i) => {
             const c = consultants.find((x) => x.id === l.consultantId);
-            return (
+            return mob ? (
+              <div key={l.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                gap: 8, padding: '12px 16px',
+                borderTop: i === 0 ? 'none' : '1px solid var(--border)',
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-1)' }}>{l.topic || 'Meeting'}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                    {fmtDate(l.date)}{c ? ` · ${c.name}` : ''}
+                  </div>
+                </div>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-1)', flexShrink: 0 }}>
+                  {fmtHrs(l.hours)}h
+                </span>
+              </div>
+            ) : (
               <div key={l.id} style={{
                 display: 'grid', gridTemplateColumns: '100px 1fr auto auto',
                 gap: 12, padding: '12px 18px', alignItems: 'center',
