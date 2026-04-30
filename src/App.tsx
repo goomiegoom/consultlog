@@ -172,7 +172,7 @@ export default function App() {
   async function reload() {
     if (state.phase !== 'ready') return;
     const data = await fetchAppData();
-    setState({ ...state, data });
+    setState((s) => s.phase === 'ready' ? { ...s, data } : s);
   }
 
   // ── Early returns ───────────────────────────────────────────────────────────
